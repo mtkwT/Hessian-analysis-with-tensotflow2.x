@@ -3,5 +3,5 @@ services:
   hessian-analysis-tf2_0:
     build: .
     volumes:
-      - ~/Hessian-spectral-for-deep/:/code/Hessian-spectral-for-deep/
+      - ~/Hessian-analysis-with-tf2_0/:/code/Hessian-analysis-with-tf2_0/
     runtime: nvidia
