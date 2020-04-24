@@ -1,0 +1,7 @@
+version: '2.3'
+services:
+  hessian-analysis-tf2_0:
+    build: .
+    volumes:
+      - ~/Hessian-spectral-for-deep/:/code/Hessian-spectral-for-deep/
+    runtime: nvidia
