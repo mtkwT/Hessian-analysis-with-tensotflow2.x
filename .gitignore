@@ -1,0 +1,8 @@
+__pycache__
+model_checkpoint/
+core*
+.ipynb_checkpoints
+*.pdf
+*.out
+*.json
+*.ipynb
