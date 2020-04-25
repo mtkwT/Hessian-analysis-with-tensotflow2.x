@@ -12,4 +12,7 @@ jobs:
       - run:
           command: |
             python test/test_preprocess.py
+      - run:
+          command: |
+            python test/test_eigens.py
       
