@@ -1,11 +1,11 @@
 version: 2.1
 jobs:
   build:
-    working_directory: ~/Hessian-analysis-with-tf2_0
+    working_directory: ~/Hessian-analysis-with-tf2_0/
     docker:
       - image: tensorflow/tensorflow:2.0.1-py3
     steps:
       - checkout
-      - run: 
-        command: |
-          ls -la
+      - run:
+          command: |
+            pip install -r build-env/requirements.txt
