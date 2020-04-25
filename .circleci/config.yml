@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: circleci/node:4.8.2
+      - image: tensorflow/tensorflow:2.0.1-py3
     steps:
       - checkout
       - run: echo "hello world"
