@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.0.1-gpu-py3-jupyter
+FROM tensorflow/tensorflow:2.1.0-gpu-py3-jupyter
 
 RUN pip install --upgrade pip
 

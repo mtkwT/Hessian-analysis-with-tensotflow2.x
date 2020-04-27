@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /code/Hessian-analysis-with-tf2_0/
     docker:
-      - image: tensorflow/tensorflow:2.0.1-py3
+      - image: tensorflow/tensorflow:2.1.0-py3
     steps:
       - checkout
       - run:
