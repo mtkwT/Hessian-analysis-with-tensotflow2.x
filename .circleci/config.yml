@@ -15,4 +15,7 @@ jobs:
       - run:
           command: |
             python test/test_eigens.py
+      - run:
+          command: |
+            python test/test_hessians.py
       
