@@ -9,7 +9,7 @@ class SmallCNN(Model):
         self.conv1 = Conv2D(32, 3, activation='relu')
         self.flatten = Flatten()
         self.d1 = Dense(128, activation='relu')
-        self.d2 = Dense(10)
+        self.d2 = Dense(10,  activation='softmax')
 
     def call(self, x):
         x = self.conv1(x)
