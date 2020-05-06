@@ -34,94 +34,60 @@ def test_step(X, y, model, loss_object, test_loss, test_acc):
     test_loss(loss)
     test_acc(y, preds)
 
-def split_train_data(X, y):
-    """
-    create validation dataset for prevent information leak
-    """
-    X_train, X_valid, y_train, y_valid = \
-        train_test_split(X, y, test_size=0.33, random_state=42)
-    return X_train, X_valid, y_train, y_valid
+def lr_scheduler(epoch):
+    if epoch <= 60: return 0.01
+    elif epoch <= 85: return 0.001
+    else: return 0.00001
 
-def train(train_ds, valid_ds, model, batch_size, epochs, is_saved=True):
-    """
-    train step using validation dataset for epochs
-    """
-    train_loss     = tf.keras.metrics.Mean(name='train_loss')
-    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
-    valid_loss     = tf.keras.metrics.Mean(name='valid_loss')
-    valid_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='valid_accuracy')
-
+def setting_train_option():
+    # build baseline model
+    model = DeepOBS_3c3d(output_dim=10, weight_decay=0.0002)
+    
+    # setting optimization option
+    optimizer_object = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9)
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4, epsilon=1e-8)
-    # optimizer = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9)
+    acc_object  = tf.keras.metrics.SparseCategoricalAccuracy(name='accuracy')
+    
+    # setting learning scheduler
+    scheduler = tf.keras.callbacks.LearningRateScheduler(lr_scheduler)
+    history = tf.keras.callbacks.History()
 
-    # n_batches = X_train.shape[0] // batch_size    
-    for epoch in range(epochs):
-        for images, labels in train_ds:
-            train_step(images, labels, model, loss_object, optimizer, train_loss, train_accuracy)
- 
-        for valid_images, valid_labels in valid_ds:
-            test_step(valid_images, valid_labels, model, loss_object, valid_loss, valid_accuracy)
-        # _X_train, _y_train = shuffle(X_train, y_train, random_state=42)
+    return model, loss_object, acc_object, optimizer_object, scheduler, history
 
-        # for batch in range(n_batches):
-        #     start = batch * batch_size
-        #     end = start + batch_size
-        #     train_step(
-        #         _X_train[start:end], _y_train[start:end],
-        #         model, loss_object, optimizer,
-        #         train_loss, train_accuracy
-        #     )
-        
-        # test_step(
-        #     X_valid, y_valid, 
-        #     model, loss_object, 
-        #     valid_loss, valid_accuracy
-        # )
-        template = 'Epoch {}, Loss: {}, Accuracy: {}%, Valid Loss: {}, Valid Accuracy: {}%'
-        print(template.format(
-            epoch + 1,
-            train_loss.result(),
-            train_accuracy.result() * 100,
-            valid_loss.result(),
-            valid_accuracy.result() * 100))
+def train(
+        train_ds, valid_ds, 
+        model, optimizer_object, loss_object, acc_object, scheduler, history,
+        batch_size, epochs, is_saved=True):
+    
+    model.compile(optimizer=optimizer_object, loss=loss_object, metrics=[acc_object])
+    model.fit(
+        train_ds, validation_data=valid_ds, 
+        epochs=epochs, steps_per_epoch=40000 // batch_size, # Here, len(train_images) == 40000
+        callbacks=[scheduler, history]
+    )
 
-        # Reset the metrics at the start of the next epoch
-        train_loss.reset_states()
-        train_accuracy.reset_states()
-        valid_loss.reset_states()
-        valid_accuracy.reset_states()
-
-    # if is_saved:
-    #     checkpoint_dir = f'model_checkpoint/{args.name}/{args.arch}/{args.optimizer}/seed_{str(args.seed)}/epochs_{str(args.epochs)}/batch_size_{str(args.batch_size)}/'
-    #     os.makedirs(checkpoint_dir, exist_ok=True)
-    #     checkpoint_prefix = os.path.join(checkpoint_dir, f'ckpt-{epoch+1}')
-    #     root = tf.train.Checkpoint(optimizer=optimizer, model=model)
-    #     root.save(checkpoint_prefix)
-    #     root.restore(tf.train.latest_checkpoint(checkpoint_dir))
-
-    return train_loss, train_accuracy, valid_loss, valid_accuracy
+    if is_saved:
+        checkpoint_dir = 'model_checkpoint/cifar10/baseline/'
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        checkpoint_prefix = os.path.join(checkpoint_dir, f'ckpt-{epoch+1}')
+        root = tf.train.Checkpoint(optimizer=optimizer, model=model)
+        root.save(checkpoint_prefix)
+        root.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
 def main():
     # set random seed to reproduce the work
-    np.random.seed(1234)
-    tf.random.set_seed(1234)
-
-    # setting validation dataset
-    # X_train, X_test,  y_train, y_test  = load_mnist()
-    # X_train, X_test,  y_train, y_test  = load_cifar10()
-    # X_train, X_valid, y_train, y_valid = split_train_data(X_train, y_train)
+    np.random.seed(42)
+    tf.random.set_seed(42)
+    # download dataset
     train_ds, valid_ds, test_ds = load_cifar10()
-
-    # build model
-    # model = SmallCNN()
-    model = DeepOBS_3c3d(output_dim=10, weight_decay=0.002)
-    # model = ResNet50(output_dim=10)
-    # model = Vgg16(output_dim=10)
-
-    # train step
-    train_loss, train_accuracy, valid_loss, valid_accuracy = \
-        train(train_ds, valid_ds, model, batch_size=128, epochs=300)
+    # setting train option 
+    model, loss_object, acc_object, optimizer_object, scheduler, history = setting_train_option()
+    # training step
+    train(
+        train_ds, valid_ds, 
+        model, optimizer_object, loss_object, acc_object, scheduler, history,
+        batch_size=128, epochs=150, is_saved=True
+    )
             
 if __name__ == '__main__':
 
