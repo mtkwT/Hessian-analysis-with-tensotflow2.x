@@ -4,4 +4,7 @@ services:
     build: .
     volumes:
       - ~/Hessian-analysis-with-tf2_0/:/code/Hessian-analysis-with-tf2_0/
+    # ports:
+    #   - '1134:1134'
+    #   comman: --port 1134
     runtime: nvidia
