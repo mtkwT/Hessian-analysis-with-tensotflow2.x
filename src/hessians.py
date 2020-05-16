@@ -4,7 +4,7 @@ from tqdm import tqdm
 @tf.function
 def get_hessian(X, y, model, loss_object, k=-2):
     """
-    get hessian matrix w.r.t the final layer's parameters
+    get hessian matrix w.r.t the last layer's parameters
     """
     with tf.GradientTape(persistent=True) as tape:
         preds = model(X)
@@ -36,7 +36,7 @@ def reshape_hessian(hessian):
     """
     return tf.reshape(hessian, (hessian.shape[0]*hessian.shape[1], hessian.shape[2]*hessian.shape[3]))
 
-def calculate_mean_hessian(X, y, model, loss_object, batch_size):
+def calculate_mean_hessian(X, y, model, loss_object, batch_size, k=-2):
     """
     calculate mean hessian matrix for full dataset
     """
@@ -45,17 +45,10 @@ def calculate_mean_hessian(X, y, model, loss_object, batch_size):
         start = batch * batch_size
         end = start + batch_size
         try:
-            mean_hessian += get_hessian(X[start:end], y[start:end], model, loss_object)
+            mean_hessian += get_hessian(X[start:end], y[start:end], model, loss_object, k)
         except:
-            mean_hessian = get_hessian(X[start:end], y[start:end], model, loss_object)
+            mean_hessian  = get_hessian(X[start:end], y[start:end], model, loss_object, k)
 
     mean_hessian /= n_batches
 
-    return mean_hessian
-
-def calculate_batch_hessian(X, y, model, loss_object, batch_size):
-    """
-    calculate hessian matrix for batch in dataset
-    """
-    batch_hessian = get_hessian(X[:batch_size], y[:batch_size], model, loss_object)
-    return batch_hessian
+    return reshape_hessian(mean_hessian)
