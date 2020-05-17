@@ -9,13 +9,15 @@ jobs:
       - run:
           command: |
             pip install -r build-env/requirements.txt
-      - run:
-          command: |
-            python test/test_preprocess.py
+      # - run:
+      #     command: |
+      #       python test/test_preprocess.py
       - run:
           command: |
             python test/test_eigens.py
       - run:
           command: |
             python test/test_hessians.py
-      
+      - run:
+          command: |
+            python test/test_grad_covariance.py
