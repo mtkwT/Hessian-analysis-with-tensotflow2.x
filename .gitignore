@@ -1,5 +1,6 @@
 __pycache__
 model_checkpoint/
+wandb/
 core*
 .ipynb_checkpoints
 *.pdf
