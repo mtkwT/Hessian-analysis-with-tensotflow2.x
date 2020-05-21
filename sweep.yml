@@ -1,0 +1,13 @@
+# sweep.yaml
+program: experiments/train_densenet121_hyperparms_serach.py
+method: bayes
+metric:
+ name: val_accuracy
+ goal: maximize
+parameters:
+ lr:
+   min: 0.0001
+   max: 0.1
+ optimizer:
+   values: ["adam", "sgd"]
+ 
