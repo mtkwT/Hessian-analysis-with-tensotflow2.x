@@ -25,6 +25,7 @@ def calc_mean_grad_covariance(X, y, model, loss_object, batch_size, k=-2):
     calculate mean gradient covariance matrix for full dataset
     """
     n_batches = X.shape[0] // batch_size
+    mean_grad_covariance = None
     for batch in tqdm(range(n_batches)):
         start = batch * batch_size
         end = start + batch_size
