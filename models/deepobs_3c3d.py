@@ -1,12 +1,11 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import \
-    Conv2D, Dense, MaxPool2D, Flatten
+from tensorflow.keras.layers import Conv2D, Dense, MaxPool2D, Flatten
 
 class DeepOBS_3c3d(Model):
-    def __init__(self, output_dim, weight_decay):
-        super().__init__()
+    def __init__(self, output_dim, weight_decay=0.001):
+        super(DeepOBS_3c3d, self).__init__()
         self.conv1 = Conv2D(64 , kernel_size = (5, 5), padding = 'valid', activation = 'relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))
         self.pool1 = MaxPool2D(  pool_size   = (3, 3), strides = (2, 2) , padding    = 'same')
         self.conv2 = Conv2D(96 , kernel_size = (3, 3), padding = 'valid', activation = 'relu', kernel_regularizer=tf.keras.regularizers.l2(weight_decay))
