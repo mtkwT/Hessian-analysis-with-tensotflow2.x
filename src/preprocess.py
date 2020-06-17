@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 from sklearn.model_selection import train_test_split
 
@@ -18,7 +19,8 @@ def load_cifar10():
     
     train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     train_dataset = train_dataset.map(
-        lambda image, label: (data_augmentation_cifar(image), tf.cast(label, tf.float32))
+        # lambda image, label: (data_augmentation_cifar(image), tf.cast(label, tf.float32))
+        lambda image, label: (tf.cast(image, tf.float32) / 255.0, tf.cast(label, tf.float32))
     ).shuffle(len(X_train)).repeat().batch(128)
 
     valid_dataset = tf.data.Dataset.from_tensor_slices((X_valid, y_valid))
@@ -39,7 +41,8 @@ def load_cifar100():
     
     train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
     train_dataset = train_dataset.map(
-        lambda image, label: (data_augmentation_cifar(image), tf.cast(label, tf.float32))
+        # lambda image, label: (data_augmentation_cifar(image), tf.cast(label, tf.float32))
+        lambda image, label: (tf.cast(image, tf.float32) / 255.0, tf.cast(label, tf.float32))
     ).shuffle(len(X_train)).repeat().batch(128)
 
     valid_dataset = tf.data.Dataset.from_tensor_slices((X_valid, y_valid))
@@ -60,8 +63,11 @@ def load_cifar10_for_hessian():
      train_images = (train_images.reshape(-1, 32, 32, 3) / 255).astype(np.float32)
      test_images = (test_images.reshape(-1, 32, 32, 3) / 255).astype(np.float32)
 
-     train_labels = np.eye(10)[train_labels].astype(np.float32).reshape(-1, 10)
-     test_labels = np.eye(10)[test_labels].astype(np.float32).reshape(-1, 10)
+    #  train_labels = np.eye(10)[train_labels].astype(np.float32).reshape(-1, 10)
+    #  test_labels = np.eye(10)[test_labels].astype(np.float32).reshape(-1, 10)
+
+    #  train_labels = np.eye(10)[train_labels].astype(np.float32)
+    #  test_labels = np.eye(10)[test_labels].astype(np.float32)
 
      return train_images, test_images, train_labels, test_labels
 
@@ -118,3 +124,32 @@ def load_fmnist():
     test_labels = np.eye(10)[test_labels].astype(np.float32).reshape(-1, 10)
     
     return train_images, test_images, train_labels, test_labels
+
+def load_reuters(batch_size=32):
+    (X_train, y_train), (X_test, y_test) = tf.keras.datasets.reuters.load_data(
+        path='reuters.npz', num_words=None, skip_top=0, maxlen=None, test_split=0.2,
+        seed=113, start_char=1, oov_char=2, index_from=3
+    )
+
+    vocab_size = len(tf.keras.datasets.reuters.get_word_index(path="reuters_word_index.npz"))
+    X_train, X_valid, y_train, y_valid   = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
+    # for convert non-rectangular Python sequence to Tensor 
+    X_train = tf.ragged.constant(X_train.tolist())
+    X_valid = tf.ragged.constant(X_valid.tolist())
+    X_test  = tf.ragged.constant(X_test.tolist())
+    
+    train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+    train_dataset = (train_dataset.shuffle(1024).batch(batch_size))
+
+    valid_dataset = tf.data.Dataset.from_tensor_slices((X_valid, y_valid))
+    valid_dataset = (valid_dataset.shuffle(1024).batch(batch_size))
+
+    test_dataset = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+    test_dataset = (test_dataset.shuffle(1024).batch(batch_size))
+
+    return vocab_size, train_dataset, valid_dataset, test_dataset
+
+if __name__ == "__main__":
+    vocab_size, train_dataset, valid_dataset, test_dataset = load_reuters()
+    print(vocab_size)
