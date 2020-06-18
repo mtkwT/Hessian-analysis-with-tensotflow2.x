@@ -168,20 +168,20 @@ def labeler(example, index):
     return example, tf.cast(index, tf.int64)  
 
 def encode(text_tensor, label):
-  encoded_text = encoder.encode(text_tensor.numpy())
-  return encoded_text, label
+    encoded_text = encoder.encode(text_tensor.numpy())
+    return encoded_text, label
 
 def encode_map_fn(text, label):
-  # py_func は返り値の Tensor に shape を設定しません
-  encoded_text, label = tf.py_function(encode, 
-                                       inp=[text, label], 
-                                       Tout=(tf.int64, tf.int64))
-  # `tf.data.Datasets` はすべての要素に shape が設定されているときにうまく動きます
-  #  なので、shape を手動で設定しましょう
-  encoded_text.set_shape([None])
-  label.set_shape([])
-
-  return encoded_text, label
+    # py_func は返り値の Tensor に shape を設定しません
+    encoded_text, label = tf.py_function(encode, 
+                                        inp=[text, label], 
+                                        Tout=(tf.int64, tf.int64))
+    # `tf.data.Datasets` はすべての要素に shape が設定されているときにうまく動きます
+    #  なので、shape を手動で設定しましょう
+    encoded_text.set_shape([None])
+    label.set_shape([])
+    
+    return encoded_text, label
 
 def load_illiad(batch_size=64):
     DIRECTORY_URL = 'https://storage.googleapis.com/download.tensorflow.org/data/illiad/'
