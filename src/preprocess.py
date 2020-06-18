@@ -207,7 +207,7 @@ def load_illiad(batch_size=64):
     vocabulary_set = set()
     for text_tensor, _ in all_labeled_data:
         some_tokens = tokenizer.tokenize(text_tensor.numpy())
-    vocabulary_set.update(some_tokens)
+        vocabulary_set.update(some_tokens)
     vocab_size = len(vocabulary_set)
 
     encoder = tfds.features.text.TokenTextEncoder(vocabulary_set)
