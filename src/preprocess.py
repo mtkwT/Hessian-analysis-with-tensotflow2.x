@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -150,6 +152,85 @@ def load_reuters(batch_size=32):
 
     return vocab_size, train_dataset, valid_dataset, test_dataset
 
+def load_imdb_reviews(batch_size=32):
+    dataset, info = tfds.load('imdb_reviews/subwords8k', with_info=True, as_supervised=True)
+
+    train_examples, test_examples = dataset['train'], dataset['test']
+    encoder = info.features['text'].encoder
+    print('Vocabulary size: {}'.format(encoder.vocab_size))
+
+    train_dataset = (train_examples.shuffle(1024).padded_batch(batch_size))
+    test_dataset = (test_examples.padded_batch(batch_size))
+
+    return encoder, train_dataset, test_dataset
+
+def labeler(example, index):
+    return example, tf.cast(index, tf.int64)  
+
+def encode(text_tensor, label):
+  encoded_text = encoder.encode(text_tensor.numpy())
+  return encoded_text, label
+
+def encode_map_fn(text, label):
+  # py_func は返り値の Tensor に shape を設定しません
+  encoded_text, label = tf.py_function(encode, 
+                                       inp=[text, label], 
+                                       Tout=(tf.int64, tf.int64))
+  # `tf.data.Datasets` はすべての要素に shape が設定されているときにうまく動きます
+  #  なので、shape を手動で設定しましょう
+  encoded_text.set_shape([None])
+  label.set_shape([])
+
+  return encoded_text, label
+
+def load_illiad(batch_size=64):
+    DIRECTORY_URL = 'https://storage.googleapis.com/download.tensorflow.org/data/illiad/'
+    FILE_NAMES = ['cowper.txt', 'derby.txt', 'butler.txt']
+
+    for name in FILE_NAMES:
+        text_dir = tf.keras.utils.get_file(name, origin=DIRECTORY_URL+name)
+    
+    parent_dir = os.path.dirname(text_dir)
+
+    labeled_data_sets = []
+    for i, file_name in enumerate(FILE_NAMES):
+        lines_dataset = tf.data.TextLineDataset(os.path.join(parent_dir, file_name))
+        labeled_dataset = lines_dataset.map(lambda ex: labeler(ex, i))
+        labeled_data_sets.append(labeled_dataset)
+    
+    all_labeled_data = labeled_data_sets[0]
+    for labeled_dataset in labeled_data_sets[1:]:
+        all_labeled_data = all_labeled_data.concatenate(labeled_dataset)
+    all_labeled_data = all_labeled_data.shuffle(50000, reshuffle_each_iteration=False)
+
+    tokenizer = tfds.features.text.Tokenizer()
+    vocabulary_set = set()
+    for text_tensor, _ in all_labeled_data:
+        some_tokens = tokenizer.tokenize(text_tensor.numpy())
+    vocabulary_set.update(some_tokens)
+    vocab_size = len(vocabulary_set)
+
+    encoder = tfds.features.text.TokenTextEncoder(vocabulary_set)
+
+    all_encoded_data = all_labeled_data.map(encode_map_fn)
+
+    train_dataset = all_encoded_data.skip(5000).shuffle(50000)
+    train_dataset = train_dataset.padded_batch(batch_size)
+
+    test_dataset  = all_encoded_data.take(5000)
+    test_dataset  = test_dataset.padded_batch(batch_size)
+
+    vocab_size += 1
+
+    return vocab_size, train_dataset, test_dataset
+
+
 if __name__ == "__main__":
     vocab_size, train_dataset, valid_dataset, test_dataset = load_reuters()
+    print(vocab_size)
+
+    encoder, train_dataset, test_dataset = load_imdb_reviews()
+    print(encoder.vocab_size)
+
+    vocab_size, train_dataset, test_dataset = load_illiad()
     print(vocab_size)
